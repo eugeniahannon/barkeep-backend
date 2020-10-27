@@ -186,3 +186,5 @@ dmypy.json
 .prof
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,python
+
+t.py
