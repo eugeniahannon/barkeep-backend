@@ -40,7 +40,22 @@ app = FastAPI()
 ###
 # Define the /drinks GET API endpoint functionality
 @app.get('/drinks')
-async def get_drinks():
+async def get_drinks(limit: int = 0):
+    # what happens when limit is provided as a query param
+    if limit > 0: 
+        # this pipeline has a limit stage
+        pipeline = [
+            {'$limit': limit},
+            {'$addFields': {'id': {'$toString': '$_id'}}},
+            {'$project': {'_id': 0}}
+        ]
+    # what happens when limit is not provided
+    if limit == 0:
+        # this pipeline has no limit stage
+        pipeline = [
+            {'$addFields': {'id': {'$toString': '$_id'}}},
+            {'$project': {'_id': 0}}
+        ]
     # get a pymongo Collection object in order work with the db
     coll = get_barkeep_coll('drinks')
     # create list to hold our query results
@@ -49,11 +64,7 @@ async def get_drinks():
     #   - find 10 documents
     #   - with no query filter
     #   - cast the `_id` field to a string in the results
-    for drink in coll.aggregate([
-                        {'$limit': 10},
-                        {'$addFields': {'id': {'$toString': '$_id'}}},
-                        {'$project': {'_id': 0}}
-                 ]):
+    for drink in coll.aggregate(pipeline):
         # add each drink to the drinks list
         drinks.append(drink)
     # return a dict with a single key 'drinks'
