@@ -2,9 +2,9 @@ from typing import List, Optional
 
 from bson import ObjectId
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from mongo import make_mongo_client
 from pydantic import BaseModel
-
 
 # define an object model for what a drink is supposed to look like.
 # this also specifies default values if fields are empty
@@ -33,7 +33,14 @@ def get_barkeep_coll(coll: str):
 
 # Instantiate a FastApi as app
 app = FastAPI()
-
+origins = ['http://localhost:3000', 'http://localhost']
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 # @app is a FastAPI Decorator that associates a path
 # with the function defined immediately after it
@@ -42,7 +49,7 @@ app = FastAPI()
 @app.get('/drinks')
 async def get_drinks(limit: int = 0):
     # what happens when limit is provided as a query param
-    if limit > 0: 
+    if limit > 0:
         # this pipeline has a limit stage
         pipeline = [
             {'$limit': limit},
