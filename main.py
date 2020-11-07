@@ -121,3 +121,79 @@ async def modify_drink(drink: Drink):
     del db_res['_id']
     # send the pre-modification drink (if it was modified) back to the client
     return db_res
+
+
+# Define the /drink DELETE API endpoint functionality
+@app.delete('/drink/{id}')
+async def mark_drink_deleted(id: str):
+    # get a pymongo Collection object in order work with the db
+    coll = get_barkeep_coll('drinks_test')
+    # update the doc in the collection with the id supplied
+    db_res = coll.update_one({'_id': ObjectId(id)}, {'$set': {'is_deleted': True}})
+    return {
+        'matched_count': db_res.matched_count,
+        'modified_count': db_res.modified_count
+    }
+
+
+# Define the /ingredients GET API endpoint to get all distinct ingredient names
+@app.get('/ingredients')
+async def get_distinct_ingredients():
+    # get a pymongo Collection object in order work with the db
+    coll = get_barkeep_coll('drinks')
+    # get a list of all distinct ingredient names
+    db_res = coll.distinct('ingredients.ingredient')
+    # remove the first element of the list, which for some reason is always None
+    db_res.pop(0)
+    return db_res
+
+
+# Defined the /search POST API endpoint for searching on cocktail name
+# TODO: make this more flexible so that the filters can be more granular
+@app.post('/search')
+async def search_for_drink(drink: Drink):
+    # extract the cocktail name from the supplied drink
+    cocktail_name = drink.dict()['name']
+    # get a pymongo Collection object in order work with the db
+    coll = get_barkeep_coll('drinks')
+    # create an empty list to hold the cursor results
+    matching_drinks = []
+    # define the aggregation pipeline
+    pipeline = [{
+                    '$search': {
+                      'text': {
+                          'query': cocktail_name,
+                          'path': 'name'
+                      }
+                    }
+                },
+                {
+                    '$project': {
+                        '_id': 0,
+                        'name': 1,
+                        'ingredients': 1,
+                        'detritus': 1,
+                        'method': 1,
+                        'history': 1,
+                        'glassware': 1,
+                        'ice': 1,
+                        'garnish': 1,
+                        'id': {
+                            '$toString': '$_id'
+                        },
+                        'score': {
+                            '$meta': 'searchScore'
+                        }
+                    }
+               }]
+    # execute the aggregation and assign the resulting cursor to db_res
+    db_res = coll.aggregate(pipeline)
+    # iterate through the cursor object
+    for drink in db_res:
+        # append each drink to the matching_drinks list
+        matching_drinks.append(drink)
+    return matching_drinks
+
+# TODO: introduce user authN/authZ to protect non-read endpoints - oauth2
+
+# NICE_TO_HAVE: image upload to Google Cloud Storage
