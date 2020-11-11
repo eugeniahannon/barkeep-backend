@@ -53,7 +53,7 @@ async def auth(request: Request):
     token = await oauth.google.authorize_access_token(request)
     user = await oauth.google.parse_id_token(request, token)
     request.session['user'] = dict(user)
-    return RedirectResponse(url='/')
+    return RedirectResponse(url='/drinks')
 
 
 @router.get('/logout')
