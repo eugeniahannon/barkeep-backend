@@ -6,7 +6,7 @@ router = APIRouter()
 
 # Define the /ingredients GET API endpoint to get all distinct ingredient names
 @router.get('/ingredients')
-async def get_distinct_ingredients():
+async def get_distinct_ingredients(access: bool = Depends(UserHasAccessToLevel(RoleLevel.EDITOR))):
     # get a pymongo Collection object in order work with the db
     coll = get_barkeep_coll('drinks')
     # get a list of all distinct ingredient names

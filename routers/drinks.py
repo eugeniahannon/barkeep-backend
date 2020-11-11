@@ -74,7 +74,10 @@ async def get_drinks(
 
 # Define the /drink GET API endpoint functionality
 @router.get('/{id}')
-async def get_drink(id: str):
+async def get_drink(
+    id: str,
+    authorized: bool = Depends(UserHasAccessToLevel(RoleLevel.EDITOR))
+):
     # get a pymongo Collection object in order work with the db
     coll = get_barkeep_coll('drinks')
     # find a cocktail from the database that matches a given _id
@@ -88,7 +91,10 @@ async def get_drink(id: str):
 
 # Define the /drink POST API endpoint functionality
 @router.post('/')
-async def insert_drink(drink: Drink, access: bool = Depends(UserHasAccessToLevel(RoleLevel.EDITOR))):
+async def insert_drink(
+    drink: Drink,
+    access: bool = Depends(UserHasAccessToLevel(RoleLevel.EDITOR))
+):
     # get a pymongo Collection object in order work with the db
     coll = get_barkeep_coll('drinks_test')
     # check if a drink with this name already exists
@@ -109,7 +115,10 @@ async def insert_drink(drink: Drink, access: bool = Depends(UserHasAccessToLevel
 
 # Define the /drink PATCH API endpoint functionality
 @router.patch('/')
-async def modify_drink(drink: Drink):
+async def modify_drink(
+    drink: Drink,
+    access: bool = Depends(UserHasAccessToLevel(RoleLevel.EDITOR))
+):
     # get a pymongo Collection object in order work with the db
     coll = get_barkeep_coll('drinks_test')
     # find a doc in the collection with the same _id as
@@ -129,7 +138,10 @@ async def modify_drink(drink: Drink):
 
 # Define the /drink DELETE API endpoint functionality
 @router.delete('/{id}')
-async def mark_drink_deleted(id: str):
+async def mark_drink_deleted(
+    id: str,
+    access: bool = Depends(UserHasAccessToLevel(RoleLevel.ADMIN))
+):
     # get a pymongo Collection object in order work with the db
     coll = get_barkeep_coll('drinks_test')
     # update the doc in the collection with the id supplied
@@ -146,7 +158,10 @@ async def mark_drink_deleted(id: str):
 # Defined the /search POST API endpoint for searching on cocktail name
 # TODO: make this more flexible so that the filters can be more granular
 @router.post('/search')
-async def search_for_drink(drink: Drink):
+async def search_for_drink(
+    drink: Drink,
+    access: bool = Depends(UserHasAccessToLevel(RoleLevel.EDITOR))
+):
     # extract the cocktail name from the supplied drink
     cocktail_name = drink.dict()['name']
     # get a pymongo Collection object in order work with the db
