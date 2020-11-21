@@ -10,13 +10,16 @@ class RoleLevel(Enum):
     ADMIN = 100
 
 
+DEFAULT_ROLE_LEVEL = RoleLevel.EDITOR
+
+
 class UserHasAccessToLevel:
     def __init__(self, role_level: RoleLevel):
         self.role_level = role_level
 
     def __call__(self, request: Request):
-        google_userid = request.session.get('user')
-        if not google_userid:
+        user = request.session.get('user')
+        if not user:
             detail = {
                 'err': 'ERROR_USER_NOT_LOGGED_IN',
                 'msg': "current user is not logged in"
@@ -25,7 +28,7 @@ class UserHasAccessToLevel:
                 status_code=401,
                 detail=detail
             )
-        user_role = get_user_role(google_userid)
+        user_role = user.get('role')
         if user_role.value < self.role_level.value:
             detail = {
                 'err': 'ERROR_USER_NOT_AUTHORIZED',
@@ -37,9 +40,3 @@ class UserHasAccessToLevel:
                 detail=detail
             )
         return True
-
-
-def get_user_role(google_userid):
-    # query users collection to get role associated with userid
-    # raise HTTPException if no such user exists in the db
-    return RoleLevel.ADMIN  # could get int back from query i.e. 50
